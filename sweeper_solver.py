@@ -91,6 +91,7 @@ def algorithm():
                         action.context_click(id_box).perform()
 
         word = input('press k to kill, else to continue: ')
+        # use different thread to kill
         if word == 'k':
             break
 

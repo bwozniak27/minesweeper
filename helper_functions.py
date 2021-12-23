@@ -152,7 +152,9 @@ def calculate(driver, grid):
                     grid[c[0]][c[1]][1] = ((grid[c[0]][c[1]][1] * mult_factor) + (num_bombs / (len(uncovered) - len(bombs)))) / grid[c[0]][c[1]][0]
                 elif grid[c[0]][c[1]][1] != 0:
                     grid[c[0]][c[1]][1] = ((grid[c[0]][c[1]][1] * mult_factor) + (num_bombs / (len(uncovered) - len(bombs)))) / grid[c[0]][c[1]][0]
+    
+    
     if finished == True:
-        return finished           
+        return finished
     return grid
 
