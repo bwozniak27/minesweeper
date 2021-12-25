@@ -9,7 +9,7 @@ from dataclasses import dataclass
 import time
 
 
-def algorithm():
+def main():
     coords = []
     # using chrome to access web
     driver = webdriver.Chrome()
@@ -19,12 +19,12 @@ def algorithm():
     driver.get('http://minesweeperonline.com/')
     
     # initial filling. -1 for blank, -2 for bomb
-    grid = []
+    board = []
     for i in range(16):
         temp_row = []
         for j in range(30):
             temp_row.append(-1)
-        grid.append(temp_row)
+        board.append(temp_row)
 
 
     # Select id of square (gonna have to change boxes to select)
@@ -40,15 +40,23 @@ def algorithm():
         coords = helper.get_squares(driver)
         for i in range(len(coords)):
             for square in coords[i]:
-                grid[square[0]][square[1]] = i
+                board[square[0]][square[1]] = i
         # flagged bombs
         coords = helper.get_flags(driver)
         for square in coords:
-            grid[square[0]][square[1]] = -2
+            board[square[0]][square[1]] = -2
         # print(grid)
-        to_click, to_flag = helper.gimmes(grid)
+        to_click, to_flag = helper.gimmes(board)
         if len(to_click) == 0 and len(to_flag) == 0:
-            done = True
+            
+            # based on probability of bombs
+            square = helper.calculate(board)
+            print("calculate: ", square)
+            if square == None:
+                done = True
+            else:
+                id_box = driver.find_element(By.ID, f'{square[0]}_{square[1]}')
+                id_box.click()
         for square in to_flag:
             id_box = driver.find_element(By.ID, f'{square[0]}_{square[1]}')
             action = ActionChains(driver)
@@ -67,16 +75,7 @@ def algorithm():
                 print(e)
                 print(square)
     x = input("done: ")
-    
-
-    
-
-    
-
-
-
-def main():
-    algorithm()
+    driver.quit()
     
 
 if __name__ == "__main__":

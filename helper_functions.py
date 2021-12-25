@@ -74,66 +74,46 @@ def get_surrounding_tiles(grid, row, col):
 
 
 # calculate chance of bomb for each square, higher number, higher chance of bomb
-def calculate(driver, grid):
-    finished  = True
-    # inclusive
-    for row in range(1, 16):
-        for col in range(1, 30):
-            # check each square
-            square = driver.find_element(By.ID, f'{row}_{col}')
-            class_type = square.get_attribute("class")
-            unopened, bombs = get_surrounding_tiles(row, col, driver)
-
-            # if there is at least one square still left to click
-            if len(unopened) > 0:
-                finished = False
-            
-            # number of bombs touching tile
-            num_bombs = 1.0
-            if class_type == "square open2":
-                num_bombs = 2.0
-            elif class_type == "square open3":
-                num_bombs = 3.0
-            elif class_type == "square open4":
-                num_bombs = 4.0
-            elif class_type == "square open5":
-                num_bombs = 5.0
-            elif class_type == "square open6":
-                num_bombs = 6.0
-            elif class_type == "square open7":
-                num_bombs = 7.0
-            elif class_type == "square open8":
-                num_bombs = 8.0
-            elif class_type == "square blank" and len(unopened) == 8:
+# TODO: find way to only check squares with unopened squares around it
+def calculate(board):
+    probabilities = []
+    for row in range(len(board)):
+        temp =[]
+        for col in range(len(board[row])):
+            temp.append([])
+        probabilities.append(temp)
+    # print("probabilities: ", probabilities)
+    for row in range(len(board)):
+        for col in range(len(board[row])):
+            if board[row][col] == -1 or board[row][col] == -2 or board[row][col] == 0:
                 continue
-            
-            # calculate chance of bomb for each square c = [x,y]
-            for c in unopened:
-                # if edge square, skip
-                if c[0] == 0 or c[1] == 0:
-                    continue
-
-                print('c[0]: {}'.format(c[0]))
-                print('c[1]: {}'.format(c[1]))
-                print('grid[c[0]][c[1]][0]: {}'.format(grid[c[0]][c[1]][0]))
-
-                # how many squares have been factored into average already
-                mult_factor = grid[c[0]][c[1]][0]
-                # add one to amount of squares for calculating average
-                grid[c[0]][c[1]][0] += 1
-                # to find new average of square
-                if len(bombs) == num_bombs:
-                    grid[c[0]][c[1]][1] = 0
-                elif grid[c[0]][c[1]][1] == float('-inf'):
-                    grid[c[0]][c[1]][1] = 0
-                    grid[c[0]][c[1]][1] = ((grid[c[0]][c[1]][1] * mult_factor) + (num_bombs / (len(unopened) - len(bombs)))) / grid[c[0]][c[1]][0]
-                elif grid[c[0]][c[1]][1] != 0:
-                    grid[c[0]][c[1]][1] = ((grid[c[0]][c[1]][1] * mult_factor) + (num_bombs / (len(unopened) - len(bombs)))) / grid[c[0]][c[1]][0]
+            unopened, bombs = get_surrounding_tiles(board, row, col)
+            if len(unopened) > 6:
+                continue
+            num_bombs = board[row][col] - len(bombs)
+            # print("unopened: ", unopened)
+            for box in unopened:
+                # print(f'appending {box}')
+                probabilities[box[0]][box[1]].append(round(float(num_bombs) / len(unopened), 2))
     
-    
-    if finished == True:
-        return finished
-    return grid
+    # print("probabilities: ", probabilities)
+    for row in range(len(probabilities)):
+        # print("row: ", probabilities[row])
+        for col in range(len(probabilities[row])):
+            if len(probabilities[row][col]) != 0:
+                average = sum(probabilities[row][col]) / len(probabilities[row][col])
+                probabilities[row][col] = round(average, 2)
+            else:
+                probabilities[row][col] = 2
+    # print(probabilities)
+    min_val = min(min(row) for row in probabilities)
+    # square = [(i, probabilities.index(min_val)) for i, square in enumerate(probabilities) if min_val in square]
+    square = []
+    for i, row in enumerate(probabilities):
+        if min_val in row:
+            square = (i, row.index(min_val))
+            break
+    return (square[0] + 1, square[1] + 1)
 
 def get_squares(driver):
     coords = []
