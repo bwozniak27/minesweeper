@@ -1,15 +1,19 @@
-import helper_functions as helper
+from helper_functions import Minesweeper
+
 
 
 def test_probability():
+    test = Minesweeper()
     # -1 is unopened, [] is not touching a bomb, -2 is flagged
     board = [[-1, -1, -1, -1, -1],
-             [-1,  1,  1,  2, -1],
-             [-1,  0,  0,  1, -1],
-             [-1,  2,  1,  1, -1],
+             [ 1,  1,  1,  2, -1],
+             [ 0,  0,  0,  1, -1],
+             [ 1,  2,  1,  1, -1],
              [-1, -1, -1, -1, -1]]
     bombs = [(0,1), (0,4), (1,4), (4,0), (4,2)]
-    square = helper.calculate(board)
+    test.set_board(board)
+    square = test.calculate_averages()
+    square = (square[0] - 1, square[1] - 1)
     print("square: ", square)
     if square not in bombs:
         print("SUCCESS")
@@ -22,52 +26,97 @@ def test_probability():
              [-1,  3,  3,  3, -1],
              [-1, -1, -1, -1, -1]]
     bombs = [(2,0), (2,4), (4,1), (4,3), (4,2), (0,2)]
-    square = helper.calculate(board)
+    test.set_board(board)
+    square = test.calculate_averages()
+    square = (square[0] - 1, square[1] - 1)
     print("square: ", square)
     if square not in bombs:
         print("SUCCESS")
     else:
         print("FAIL")
+        
+    board = [[-2, -2],
+             [-1,  3],
+             [-1,  2],
+             [-1,  1]]
+    bombs = [(1,0), (3,0)]
+    test.set_board(board)
+    square = test.calculate_averages()
+    square = (square[0] - 1, square[1] - 1)
+    print("square: ", square)
+    if square not in bombs:
+        print("SUCCESS")
+    else:
+        print("FAIL")
+        
+def gimme_printing(correct, output, test):
+    a = set(correct)
+    b = set(output)
+    test_num = str(test).split('.')[0]
+    test_type = str(test).split('.')[1]
+    print(f'test {test_num}:')
+    if a == b:
+        print(f'{"click" if test_type == "1" else "flag"} test passed')
+    else:
+        if len(a) > len(b):
+            print(f'correct {"click" if test_type == "1" else "flag"} has {a - b}')
+        else:
+            print(f'to {"click" if test_type == "1" else "flag"} has {b - a}')
+    print("")
 
 def test_gimmes():
+    test = Minesweeper()
+    # test 1
     board = [[ 0,  1, -1, -1, -1],
              [ 1,  2,  2,  2, -1],
              [-1,  1,  1,  1, -1],
              [-1,  2,  1, -1, -1],
              [-1, -1, -1, -1, -1]]
     correct_click = [(4,1), (4,2), (4,3), (1,4), (2,4), (3,4), (3,0), (0,4)]
-    print()
     correct_flag = [(0,2), (0,3), (3,3), (4,0), (2,0)]
-    to_click, to_flag = helper.gimmes(board)
-    a = set(correct_click)
-    b = set(to_click)
-    if a == b:
-        print("Click test passed")
-    else:
-        if len(a) > len(b):
-            print("correct_click has ", a - b)
-        else:
-            print("to_click has ", b - a)
-    a = set(correct_flag)
-    b = set(to_flag)
-    if a == b:
-        print("Click test passed")
-    else:
-        if len(a) > len(b):
-            print("correct_flag has ", a - b)
-        else:
-            print("to_flag has ", b - a)
+    test.set_board(board)
+    to_click, to_flag = test.gimmes()
+    gimme_printing(correct_click, to_click, 1.1)
+    gimme_printing(correct_flag, to_flag, 1.2)
+    
+    # test 2
+    board = [[-2, -1],
+             [ 3, -1],
+             [ 2, -1],
+             [-2, -1]]
+    correct_click = [(3,1)]
+    correct_flag = [(0,1)]
+    test.set_board(board)
+    to_click, to_flag = test.gimmes()
+    gimme_printing(correct_click, to_click, 2.1)
+    gimme_printing(correct_flag, to_flag, 2.2)
 
-
+    # test 3
+    board = [[-2,  2,  1],
+             [ 2, -1, -1],
+             [ 2, -1, -1],
+             [-2, -1, -1]]
+    correct_click = [(3,1)]
+    correct_flag = []
+    test.set_board(board)
+    to_click, to_flag = test.gimmes()
+    gimme_printing(correct_click, to_click, 3.1)
+    gimme_printing(correct_flag, to_flag, 3.2)
+    
+    # test 4
+    board = [[-2, -2],
+             [-1,  3],
+             [-1,  2],
+             [-1,  1]]
+    correct_click = [(2,0)]
+    correct_flag = [(1,0), (3,0)]
+    test.set_board(board)
+    to_click, to_flag = test.gimmes()
+    gimme_printing(correct_click, to_click, 4.1)
+    gimme_printing(correct_flag, to_flag, 4.2)
+    
 def main():
-    print("select which test to run")
-    selection = input("1: probability\n2: gimmes\n")
-    if selection == "1":
-        test_probability()
-    elif selection == "2":
-        test_gimmes()
-    else:
-        print("invalid selection")
+    test_gimmes()
         
 if __name__ == "__main__":
     main()
