@@ -1,53 +1,5 @@
 from helper_functions import Minesweeper
 
-
-
-def test_probability():
-    test = Minesweeper()
-    # -1 is unopened, [] is not touching a bomb, -2 is flagged
-    board = [[-1, -1, -1, -1, -1],
-             [ 1,  1,  1,  2, -1],
-             [ 0,  0,  0,  1, -1],
-             [ 1,  2,  1,  1, -1],
-             [-1, -1, -1, -1, -1]]
-    bombs = [(0,1), (0,4), (1,4), (4,0), (4,2)]
-    test.set_board(board)
-    square = test.calculate_averages()
-    square = (square[0] - 1, square[1] - 1)
-    print("square: ", square)
-    if square not in bombs:
-        print("SUCCESS")
-    else:
-        print("FAIL")
-    
-    board = [[-1, -1, -1, -1, -1],
-             [-1,  2,  1,  2, -1],
-             [-1,  1,  0,  1, -1],
-             [-1,  3,  3,  3, -1],
-             [-1, -1, -1, -1, -1]]
-    bombs = [(2,0), (2,4), (4,1), (4,3), (4,2), (0,2)]
-    test.set_board(board)
-    square = test.calculate_averages()
-    square = (square[0] - 1, square[1] - 1)
-    print("square: ", square)
-    if square not in bombs:
-        print("SUCCESS")
-    else:
-        print("FAIL")
-        
-    board = [[-2, -2],
-             [-1,  3],
-             [-1,  2],
-             [-1,  1]]
-    bombs = [(1,0), (3,0)]
-    test.set_board(board)
-    square = test.calculate_averages()
-    square = (square[0] - 1, square[1] - 1)
-    print("square: ", square)
-    if square not in bombs:
-        print("SUCCESS")
-    else:
-        print("FAIL")
         
 def gimme_printing(correct, output, test):
     a = set(correct)

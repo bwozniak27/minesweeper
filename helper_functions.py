@@ -1,9 +1,9 @@
-import selenium
+# import selenium
 from selenium import webdriver
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
-from dataclasses import dataclass
 import itertools
+from selenium.webdriver.chrome.options import Options
 
 
 class Minesweeper:
@@ -21,9 +21,14 @@ class Minesweeper:
             self.completed.append(tracking_row)
             
     def run(self):
-        self.driver = webdriver.Chrome()
+        path_to_adblock = '/Users/benwozniak/Desktop/4.41.0_0'
+        chrome_options = Options()
+        chrome_options.add_argument('load-extension=' + path_to_adblock)
+        self.driver = webdriver.Chrome(chrome_options=chrome_options)
+        self.driver.create_options()
         # open minesweeper.com
         self.driver.get('http://minesweeperonline.com/')
+        self.driver.switch_to.window(self.driver.window_handles[0])
         # self.driver.find_element(By.ID, 'options-link').click()
         # self.driver.find_element(By.ID, 'custom').click()
         # h = self.driver.find_element(By.ID, 'custom_height')
@@ -64,7 +69,7 @@ class Minesweeper:
             # print(grid)
             to_click, to_flag = self.gimmes()
             if len(to_click) == 0 and len(to_flag) == 0:
-                print("run out of moves")
+                print("ran out of moves")
                 break
                 # based on probability of bombs
                 # square = self.calculate_maxes()
@@ -130,92 +135,18 @@ class Minesweeper:
             num_bombs = self.board[square[0]][square[1]] - len(bombs)
             return (unopened[0][0] + 1, unopened[0][1] + 1)
             
-    # calculate chance of bomb for each square, higher number, higher chance of bomb
-    def calculate_averages(self):
-        probabilities = []
-        for row in range(len(self.board)):
-            temp =[]
-            for col in range(len(self.board[row])):
-                temp.append([])
-            probabilities.append(temp)
-        for row in range(len(self.board)):
-            for col in range(len(self.board[row])):
-                unit = self.board[row][col]
-                if unit == -1 or unit == -2 or unit == 0 or self.completed[row][col]:
-                    continue
-                unopened, bombs, other_squares = self.get_surrounding_tiles(row, col)
-                if len(unopened) > 6:
-                    continue
-                num_bombs = self.board[row][col] - len(bombs)
-                for box in unopened:
-                    probabilities[box[0]][box[1]].append(round(float(num_bombs) / len(unopened), 2))
-        
-        for row in range(len(probabilities)):
-            for col in range(len(probabilities[row])):
-                if len(probabilities[row][col]) != 0:
-                    average = sum(probabilities[row][col]) / len(probabilities[row][col])
-                    probabilities[row][col] = round(average, 2)
-                else:
-                    probabilities[row][col] = 2
-        min_val = min(min(row) for row in probabilities)
-        square = []
-        for i, row in enumerate(probabilities):
-            if min_val in row:
-                square = (i, row.index(min_val))
-                break
-        return (square[0] + 1, square[1] + 1)
-    
-    def calculate_maxes(self):
-        probabilities = []
-        for row in range(len(self.board)):
-            temp = []
-            for col in range(len(self.board[row])):
-                temp.append(2)
-            probabilities.append(temp)
-        for row in range(len(self.board)):
-            for col in range(len(self.board[row])):
-                unit = self.board[row][col]
-                if unit == -1 or unit == -2 or unit == 0:
-                    continue
-                if self.completed[row][col]:
-                    # print(f'completed: ({row}, {col})')
-                    continue
-                unopened, bombs, other_squares = self.get_surrounding_tiles(row, col)
-                if len(unopened) > 6:
-                    continue
-                num_bombs = self.board[row][col] - len(bombs)
-                for box in unopened:
-                    if probabilities[box[0]][box[1]] == 2:
-                        probabilities[box[0]][box[1]] = round(float(num_bombs) / len(unopened), 2)
-                    else:
-                        probabilities[box[0]][box[1]] = max(probabilities[box[0]][box[1]], round(float(num_bombs) / len(unopened), 2))
-        
-        # for row in range(len(probabilities)):
-        #     for col in range(len(probabilities[row])):
-        #         if len(probabilities[row][col]) != 0:
-        #             average = sum(probabilities[row][col]) / len(probabilities[row][col])
-        #             probabilities[row][col] = round(average, 2)
-        #         else:
-        #             probabilities[row][col] = 2
-        min_val = min(min(row) for row in probabilities)
-        square = []
-        for i, row in enumerate(probabilities):
-            if min_val in row:
-                square = (i, row.index(min_val))
-                break
-        return (square[0] + 1, square[1] + 1)
 
     def get_squares(self):
         coords = []
         for i in range(9):
             boxes = self.driver.find_elements(By.CLASS_NAME, f'square.open{i}')
-            temp = []
-            for box in boxes:
-                Id = box.get_attribute('id')
-                Id = Id.split('_')
-                square = (int(Id[0]) - 1, int(Id[1]) - 1)
-                temp.append(square)
-            coords.append(temp)
+            temp = map(lambda x: (x.get_attribute('id')).split('_'), boxes)
+            # for box in boxes:
+            #     Id = box.get_attribute('id')
+            #     Id = Id.split('_')
+            #     square = (int(Id[0]) - 1, int(Id[1]) - 1)
+            #     temp.append(square)
+            coords.append(map(lambda x: (int(x[0]) - 1, int(x[1]) - 1), temp))
             
         return coords
     
@@ -275,7 +206,7 @@ class Minesweeper:
                 
                 # TODO: if elements are different, but length is same
                 # could be false positive
-                # need orlapping element to appear len(bomb combos) times
+                # need overlapping element to appear len(bomb combos) times
                 if len(remaining_tiles) == len(bomb_combos):
                     deduced_clicks = remaining_tiles[0]
                     for tile in remaining_tiles:
@@ -289,8 +220,7 @@ class Minesweeper:
         return restart, to_click, to_flag
                 
     def gimmes(self):
-        to_flag = []
-        to_click = []
+        to_flag, to_click = [], []
         done = False
         while not done:
             restart = False
@@ -335,6 +265,7 @@ class Minesweeper:
             if restart == False:
                 done = True
         # print(board)
+        to_flag = list(set(to_flag))
         return to_click, to_flag
 
     def get_flags(self):
