@@ -9,11 +9,9 @@ from selenium.webdriver.chrome.options import Options
 class Minesweeper:
     def __init__(self):
         self.driver = None
-        self.board = []
-        self.completed = [] # used to track which squares don't need to be checked
+        self.board, self.completed = [], [] # used to track which squares don't need to be checked
         for i in range(16):
-            board_row = []
-            tracking_row = []
+            board_row, tracking_row = [], []
             for j in range(30):
                 board_row.append(-1)
                 tracking_row.append(False)
@@ -70,15 +68,15 @@ class Minesweeper:
             to_click, to_flag = self.gimmes()
             if len(to_click) == 0 and len(to_flag) == 0:
                 print("ran out of moves")
-                break
+                square = self.gamble()
                 # based on probability of bombs
                 # square = self.calculate_maxes()
                 # print("calculate: ", square)
-                # if square == None:
-                #     done = True
-                # else:
-                #     id_box = self.driver.find_element(By.ID, f'{square[0]}_{square[1]}')
-                #     id_box.click()
+                if square == None:
+                    done = True
+                else:
+                    id_box = self.driver.find_element(By.ID, f'{square[0]}_{square[1]}')
+                    id_box.click()
             action = ActionChains(self.driver)
             for square in to_flag:
                 id_box = self.driver.find_element(By.ID, f'{square[0]}_{square[1]}')
@@ -98,9 +96,7 @@ class Minesweeper:
     def get_surrounding_tiles(self, row, col):
         # check for edges
         # print(f'square: {row}_{col}')
-        unopened = []
-        bombs = []
-        other_squares = []
+        unopened, bombs, other_squares = [], [], []
         pattern = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]]
 
         # top left
@@ -126,14 +122,18 @@ class Minesweeper:
                 temp.append(False)
             self.completed.append(temp)
     def gamble(self):
-        boxes = self.driver.find_elements(By.CLASS_NAME, 'square.open1')
+        boxes = self.driver.find_elements(By.CLASS_NAME, 'square.blank')
+        square = 0
         for box in boxes:
             Id = box.get_attribute('id')
             Id = Id.split('_')
             square = (int(Id[0]) - 1, int(Id[1]) - 1)
-            unopened, bombs = self.get_surrounding_tiles(square[0], square[1])
-            num_bombs = self.board[square[0]][square[1]] - len(bombs)
-            return (unopened[0][0] + 1, unopened[0][1] + 1)
+            unopened, bombs, other_squares = self.get_surrounding_tiles(square[0], square[1])
+            # num_bombs = self.board[square[0]][square[1]] - len(bombs)
+            if len(other_squares) == 2:
+                return (unopened[0][0] + 1, unopened[0][1] + 1)
+            
+        return (square[0] + 1, square[1] + 1)
             
 
     def get_squares(self):
