@@ -77,10 +77,10 @@ class Minesweeper:
                 else:
                     id_box = self.driver.find_element(By.ID, f'{square[0]}_{square[1]}')
                     id_box.click()
-            action = ActionChains(self.driver)
-            for square in to_flag:
-                id_box = self.driver.find_element(By.ID, f'{square[0]}_{square[1]}')
-                action.context_click(id_box).perform()
+            # action = ActionChains(self.driver)
+            # for square in to_flag:
+            #     id_box = self.driver.find_element(By.ID, f'{square[0]}_{square[1]}')
+            #     action.context_click(id_box).perform()
             for square in to_click:
                 id_box = self.driver.find_element(By.ID, f'{square[0]}_{square[1]}')
 
