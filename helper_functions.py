@@ -1,4 +1,4 @@
-# import selenium
+import selenium
 from selenium import webdriver
 from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
@@ -55,43 +55,48 @@ class Minesweeper:
     
         done = False
         while not done:
-            # each square type
-            coords = self.get_squares()
-            for i in range(len(coords)):
-                for square in coords[i]:
-                    self.board[square[0]][square[1]] = i
-            # flagged bombs
-            coords = self.get_flags()
-            for square in coords:
-                self.board[square[0]][square[1]] = -2
-            # print(grid)
-            to_click, to_flag = self.gimmes()
-            if len(to_click) == 0 and len(to_flag) == 0:
-                print("ran out of moves")
-                square = self.gamble()
-                # based on probability of bombs
-                # square = self.calculate_maxes()
-                # print("calculate: ", square)
-                if square == None:
-                    done = True
-                else:
+            try:
+                # each square type
+                self.get_squares()
+                # for i in range(len(coords)):
+                #     for square in coords[i]:
+                #         self.board[square[0]][square[1]] = i
+                # flagged bombs
+                # coords = self.get_flags()
+                # for square in coords:
+                #     self.board[square[0]][square[1]] = -2
+                # print(grid)
+                to_click, to_flag = self.gimmes()
+                if len(to_click) == 0 and len(to_flag) == 0:
+                    print("ran out of moves")
+                    square = self.gamble()
+                    # based on probability of bombs
+                    # square = self.calculate_maxes()
+                    # print("calculate: ", square)
+                    if square == None:
+                        done = True
+                    else:
+                        id_box = self.driver.find_element(By.ID, f'{square[0]}_{square[1]}')
+                        id_box.click()
+                # action = ActionChains(self.driver)
+                # for square in to_flag:
+                #     id_box = self.driver.find_element(By.ID, f'{square[0]}_{square[1]}')
+                #     action.context_click(id_box).perform()
+                for square in to_click:
                     id_box = self.driver.find_element(By.ID, f'{square[0]}_{square[1]}')
-                    id_box.click()
-            # action = ActionChains(self.driver)
-            # for square in to_flag:
-            #     id_box = self.driver.find_element(By.ID, f'{square[0]}_{square[1]}')
-            #     action.context_click(id_box).perform()
-            for square in to_click:
-                id_box = self.driver.find_element(By.ID, f'{square[0]}_{square[1]}')
 
-                # click square
-                try:
-                    id_box.click()
-                except Exception as e:
-                    print(e)
-                    print(square)
-        x = input("done: ")
-        self.driver.quit()
+                    # click square
+                    try:
+                        id_box.click()
+                    except Exception as e:
+                        print(e)
+                        print(square)
+            except Exception as e:
+                obj = self.driver.switch_to.alert
+                obj.send_keys("BenWozniak")
+                obj.accept()
+                x = input("done: ")
+                self.driver.quit()
     # get surrounding tiles
     def get_surrounding_tiles(self, row, col):
         # check for edges
@@ -122,18 +127,15 @@ class Minesweeper:
                 temp.append(False)
             self.completed.append(temp)
     def gamble(self):
-        boxes = self.driver.find_elements(By.CLASS_NAME, 'square.blank')
-        square = 0
-        for box in boxes:
-            Id = box.get_attribute('id')
-            Id = Id.split('_')
-            square = (int(Id[0]) - 1, int(Id[1]) - 1)
-            unopened, bombs, other_squares = self.get_surrounding_tiles(square[0], square[1])
-            # num_bombs = self.board[square[0]][square[1]] - len(bombs)
-            if len(other_squares) == 2:
-                return (unopened[0][0] + 1, unopened[0][1] + 1)
-            
-        return (square[0] + 1, square[1] + 1)
+        square = None
+        for row in range(len(self.board)):
+            # for col in range(len(self.board[row])):
+            #     if self.board[row][col] == -1:
+            try:
+                col = self.board[row].index(-1)
+                return (row + 1, col + 1)
+            except:
+                continue
             
 
     def get_squares(self):
@@ -141,12 +143,9 @@ class Minesweeper:
         for i in range(9):
             boxes = self.driver.find_elements(By.CLASS_NAME, f'square.open{i}')
             temp = map(lambda x: (x.get_attribute('id')).split('_'), boxes)
-            # for box in boxes:
-            #     Id = box.get_attribute('id')
-            #     Id = Id.split('_')
-            #     square = (int(Id[0]) - 1, int(Id[1]) - 1)
-            #     temp.append(square)
-            coords.append(map(lambda x: (int(x[0]) - 1, int(x[1]) - 1), temp))
+            temp = list(map(lambda x: (int(x[0]) - 1, int(x[1]) - 1), temp))
+            for x in range(len(temp)):
+                self.board[temp[x][0]][temp[x][1]] = i
             
         return coords
     
@@ -268,16 +267,6 @@ class Minesweeper:
         to_flag = list(set(to_flag))
         return to_click, to_flag
 
-    def get_flags(self):
-        coords = []
-        boxes = self.driver.find_elements(By.CLASS_NAME, 'square.bombflagged')
-        for box in boxes:
-            Id = box.get_attribute('id')
-            Id = Id.split('_')
-            square = (int(Id[0]) - 1, int(Id[1]) - 1)
-            coords.append(square)
-            
-        return coords
 
 
 
