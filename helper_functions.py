@@ -27,20 +27,6 @@ class Minesweeper:
         # open minesweeper.com
         self.driver.get('http://minesweeperonline.com/')
         self.driver.switch_to.window(self.driver.window_handles[0])
-        # self.driver.find_element(By.ID, 'options-link').click()
-        # self.driver.find_element(By.ID, 'custom').click()
-        # h = self.driver.find_element(By.ID, 'custom_height')
-        # h.clear()
-        # h.send_keys('100')
-        # w = self.driver.find_element(By.ID, 'custom_width')
-        # w.clear()
-        # w.send_keys('100')
-        # b = self.driver.find_element(By.ID, 'custom_mines')
-        # b.clear()
-        # b.send_keys('1000')
-        # self.driver.find_element(By.CLASS_NAME, 'dialogText').click()
-        
-        # initial filling. -1 for blank, -2 for bomb
         
         
 
@@ -53,43 +39,48 @@ class Minesweeper:
     
         done = False
         while not done:
-            # each square type
-            self.get_squares()
-            # for i in range(len(coords)):
-            #     for square in coords[i]:
-            #         self.board[square[0]][square[1]] = i
-            # flagged bombs
-            # coords = self.get_flags()
-            # for square in coords:
-            #     self.board[square[0]][square[1]] = -2
-            # print(grid)
-            to_click, to_flag = self.gimmes()
-            if len(to_click) == 0 and len(to_flag) == 0:
-                print("ran out of moves")
-                square = self.gamble()
-                if square == None:
-                    done = True
-                else:
+            try:
+                # each square type
+                self.get_squares()
+                # for i in range(len(coords)):
+                #     for square in coords[i]:
+                #         self.board[square[0]][square[1]] = i
+                # flagged bombs
+                # coords = self.get_flags()
+                # for square in coords:
+                #     self.board[square[0]][square[1]] = -2
+                # print(grid)
+                to_click, to_flag = self.gimmes()
+                if len(to_click) == 0 and len(to_flag) == 0:
+                    print("ran out of moves")
+                    square = self.gamble()
+                    # based on probability of bombs
+                    # square = self.calculate_maxes()
+                    # print("calculate: ", square)
+                    if square == None:
+                        done = True
+                    else:
+                        id_box = self.driver.find_element(By.ID, f'{square[0]}_{square[1]}')
+                        id_box.click()
+                # action = ActionChains(self.driver)
+                # for square in to_flag:
+                #     id_box = self.driver.find_element(By.ID, f'{square[0]}_{square[1]}')
+                #     action.context_click(id_box).perform()
+                for square in to_click:
                     id_box = self.driver.find_element(By.ID, f'{square[0]}_{square[1]}')
+
+                    # click square
                     try:
                         id_box.click()
                     except Exception as e:
-                        print(e.__class__.__name__)
+                        print(e)
                         print(square)
-                # pause = input("press enter to continue")
-            
-            for square in to_click:
-                id_box = self.driver.find_element(By.ID, f'{square[0]}_{square[1]}')
-
-                # click square
-                try:
-                    id_box.click()
-                except Exception as e:
-                    print(e.__class__.__name__)
-                    print(square)
-            # pause = input("press enter to continue")
-        x = input("done: ")
-        self.driver.quit()
+            except Exception as e:
+                obj = self.driver.switch_to.alert
+                obj.send_keys("BenWozniak")
+                obj.accept()
+                x = input("done: ")
+                self.driver.quit()
     # get surrounding tiles
     def get_surrounding_tiles(self, row, col):
         # check for edges
@@ -157,29 +148,26 @@ class Minesweeper:
         # return coords
     
     def deducer(self, unopened, num_bombs, other_squares):
-        decoding_dict = {}
         to_flag = []
         to_click = []
         restart = False
         for neighbor in other_squares:
             unopened2, bombs2, other_squares2 = self.get_surrounding_tiles(neighbor[0], neighbor[1])
             num_bombs2 = self.board[neighbor[0]][neighbor[1]] - len(bombs2)
-            decoding_dict[neighbor] = [num_bombs2, unopened2]
-        for square in decoding_dict:
-            if decoding_dict[square][0] == 0:
-                for box in decoding_dict[square][1]:
+            if num_bombs2 == 0:
+                for box in unopened2:
                     self.board[box[0]][box[1]] = 0
                     # TODO: change back to + 1
                     to_click.append((box[0] + 1, box[1] + 1))
                 
-                self.completed[square[0]][square[1]] = True
-            elif decoding_dict[square][0] == len(decoding_dict[square][1]):
-                for box in decoding_dict[square][1]:
+                self.completed[neighbor[0]][neighbor[1]] = True
+            elif num_bombs2 == len(unopened2):
+                for box in unopened2:
                     self.board[box[0]][box[1]] = -2
                     # TODO: change back to + 1
                     to_flag.append((box[0] + 1, box[1] + 1))
                 
-                self.completed[square[0]][square[1]] = True
+                self.completed[neighbor[0]][neighbor[1]] = True
             else:
                 # try all combos of bombs for current,
                 # check if any work with neighbors
@@ -191,12 +179,12 @@ class Minesweeper:
                 remaining_tiles = []
                 for combo in bomb_combos:
                     a = set(combo) # current square
-                    b = set(decoding_dict[square][1]) # neighbor square
+                    b = set(unopened2) # neighbor square
                     intersect = a.intersection(b)
-                    if len(intersect) > decoding_dict[square][0]:
+                    if len(intersect) > num_bombs2:
                         # invalid combo
                         bomb_combos.remove(combo)
-                    if len(intersect) == decoding_dict[square][0]:
+                    if len(intersect) == num_bombs2:
                         # valid combo
                         remaining = b - a
                         remaining_tiles.append(remaining)
