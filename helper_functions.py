@@ -45,7 +45,7 @@ class Minesweeper:
         
 
         # Select id of square (gonna have to change boxes to select)
-        square = (8, 15)
+        square = (1, 1)
         id_box = self.driver.find_element(By.ID, f'{square[0]}_{square[1]}')
 
         # click square
@@ -91,11 +91,14 @@ class Minesweeper:
                     except Exception as e:
                         print(e)
                         print(square)
+                if self.done():
+                    x = input("should be done: ")
             except Exception as e:
+                x = input("done: ")
                 obj = self.driver.switch_to.alert
                 obj.send_keys("BenWozniak")
                 obj.accept()
-                x = input("done: ")
+                
                 self.driver.quit()
     # get surrounding tiles
     def get_surrounding_tiles(self, row, col):
@@ -127,15 +130,25 @@ class Minesweeper:
                 temp.append(False)
             self.completed.append(temp)
     def gamble(self):
-        square = None
         for row in range(len(self.board)):
             # for col in range(len(self.board[row])):
             #     if self.board[row][col] == -1:
             try:
                 col = self.board[row].index(-1)
                 return (row + 1, col + 1)
-            except:
+            except Exception as e:
                 continue
+            
+    def done(self):
+        for row in range(len(self.board)):
+            # for col in range(len(self.board[row])):
+            #     if self.board[row][col] == -1:
+            try:
+                col = self.board[row].index(-1)
+                return False
+            except Exception as e:
+                continue
+        return True
             
 
     def get_squares(self):
