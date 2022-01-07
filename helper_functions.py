@@ -4,12 +4,10 @@ from selenium.webdriver import ActionChains
 from selenium.webdriver.common.by import By
 import itertools
 from selenium.webdriver.chrome.options import Options
-
-
 class Minesweeper:
     def __init__(self):
         self.driver = None
-        self.board, self.completed = [], [] # used to track which squares don't need to be checked
+        self.board, self.completed = [], [] 
         for i in range(16):
             board_row, tracking_row = [], []
             for j in range(30):
@@ -17,75 +15,34 @@ class Minesweeper:
                 tracking_row.append(False)
             self.board.append(board_row)
             self.completed.append(tracking_row)
-            
     def run(self):
         path_to_adblock = '/Users/benwozniak/Desktop/4.41.0_0'
         chrome_options = Options()
         chrome_options.add_argument('load-extension=' + path_to_adblock)
         self.driver = webdriver.Chrome(chrome_options=chrome_options)
         self.driver.create_options()
-        # open minesweeper.com
         self.driver.get('http://minesweeperonline.com/')
         self.driver.switch_to.window(self.driver.window_handles[0])
-        # self.driver.find_element(By.ID, 'options-link').click()
-        # self.driver.find_element(By.ID, 'custom').click()
-        # h = self.driver.find_element(By.ID, 'custom_height')
-        # h.clear()
-        # h.send_keys('100')
-        # w = self.driver.find_element(By.ID, 'custom_width')
-        # w.clear()
-        # w.send_keys('100')
-        # b = self.driver.find_element(By.ID, 'custom_mines')
-        # b.clear()
-        # b.send_keys('1000')
-        # self.driver.find_element(By.CLASS_NAME, 'dialogText').click()
-        
-        # initial filling. -1 for blank, -2 for bomb
-        
-        
-
-        # Select id of square (gonna have to change boxes to select)
-        square = (1, 1)
+        square = (8, 8)
         id_box = self.driver.find_element(By.ID, f'{square[0]}_{square[1]}')
-
-        # click square
         id_box.click()
-        
         coords = []
-    
         done = False
         while not done:
             try:
-                # each square type
                 self.get_squares()
-                # for i in range(len(coords)):
-                #     for square in coords[i]:
-                #         self.board[square[0]][square[1]] = i
-                # flagged bombs
-                # coords = self.get_flags()
-                # for square in coords:
-                #     self.board[square[0]][square[1]] = -2
-                # print(grid)
                 to_click, to_flag = self.gimmes()
                 if len(to_click) == 0 and len(to_flag) == 0:
                     print("ran out of moves")
+                    x = input("continue?: ")
                     square = self.gamble()
-                    # based on probability of bombs
-                    # square = self.calculate_maxes()
-                    # print("calculate: ", square)
                     if square == None:
                         done = True
                     else:
                         id_box = self.driver.find_element(By.ID, f'{square[0]}_{square[1]}')
                         id_box.click()
-                # action = ActionChains(self.driver)
-                # for square in to_flag:
-                #     id_box = self.driver.find_element(By.ID, f'{square[0]}_{square[1]}')
-                #     action.context_click(id_box).perform()
                 for square in to_click:
                     id_box = self.driver.find_element(By.ID, f'{square[0]}_{square[1]}')
-
-                    # click square
                     try:
                         id_box.click()
                     except Exception as e:
@@ -98,16 +55,10 @@ class Minesweeper:
                 obj = self.driver.switch_to.alert
                 obj.send_keys("BenWozniak")
                 obj.accept()
-                
                 self.driver.quit()
-    # get surrounding tiles
     def get_surrounding_tiles(self, row, col):
-        # check for edges
-        # print(f'square: {row}_{col}')
         unopened, bombs, other_squares = [], [], []
         pattern = [[-1, -1], [-1, 0], [-1, 1], [0, -1], [0, 1], [1, -1], [1, 0], [1, 1]]
-
-        # top left
         for op in pattern:
             temp_row = row + op[0]
             temp_col = col + op[1]
@@ -118,9 +69,7 @@ class Minesweeper:
                     unopened.append((temp_row, temp_col))
                 elif self.board[temp_row][temp_col] != 0 and not self.completed[temp_row][temp_col]:
                     other_squares.append((temp_row, temp_col))
-
         return unopened, bombs, other_squares
-
     def set_board(self, board):
         self.board = board
         self.completed = []
@@ -131,26 +80,19 @@ class Minesweeper:
             self.completed.append(temp)
     def gamble(self):
         for row in range(len(self.board)):
-            # for col in range(len(self.board[row])):
-            #     if self.board[row][col] == -1:
             try:
                 col = self.board[row].index(-1)
                 return (row + 1, col + 1)
             except Exception as e:
                 continue
-            
     def done(self):
         for row in range(len(self.board)):
-            # for col in range(len(self.board[row])):
-            #     if self.board[row][col] == -1:
             try:
                 col = self.board[row].index(-1)
                 return False
             except Exception as e:
                 continue
         return True
-            
-
     def get_squares(self):
         coords = []
         for i in range(9):
@@ -159,9 +101,7 @@ class Minesweeper:
             temp = list(map(lambda x: (int(x[0]) - 1, int(x[1]) - 1), temp))
             for x in range(len(temp)):
                 self.board[temp[x][0]][temp[x][1]] = i
-            
         return coords
-    
     def deducer(self, unopened, num_bombs, other_squares):
         to_flag = []
         to_click = []
@@ -172,62 +112,41 @@ class Minesweeper:
             if num_bombs2 == 0:
                 for box in unopened2:
                     self.board[box[0]][box[1]] = 0
-                    # TODO: change back to + 1
                     to_click.append((box[0] + 1, box[1] + 1))
-                
                 self.completed[neighbor[0]][neighbor[1]] = True
             elif num_bombs2 == len(unopened2):
                 for box in unopened2:
                     self.board[box[0]][box[1]] = -2
-                    # TODO: change back to + 1
                     to_flag.append((box[0] + 1, box[1] + 1))
-                
                 self.completed[neighbor[0]][neighbor[1]] = True
             else:
-                # try all combos of bombs for current,
-                # check if any work with neighbors
-                # RULES:
-                # 1) if theres a common element, must be bomb
-                # 2) if all valid combos fulfill neighbor square, then all 
-                # remaining tiles for neighbor are safe
                 bomb_combos = list(itertools.combinations(unopened, num_bombs))
                 remaining_tiles = []
                 for combo in bomb_combos:
-                    a = set(combo) # current square
-                    b = set(unopened2) # neighbor square
+                    a = set(combo)
+                    b = set(unopened2)
                     intersect = a.intersection(b)
                     if len(intersect) > num_bombs2:
-                        # invalid combo
                         bomb_combos.remove(combo)
                     if len(intersect) == num_bombs2:
-                        # valid combo
                         remaining = b - a
                         remaining_tiles.append(remaining)
-                    
-                # bomb_combos is only valid combos
                 deduced_bombs = bomb_combos[0]
                 for combo in bomb_combos:
                     deduced_bombs = list(set(deduced_bombs).intersection(combo))
                 for box in deduced_bombs:
                     self.board[box[0]][box[1]] = -2
-                    # TODO: change back to + 1
                     to_flag.append((box[0] + 1, box[1] + 1))
-                
-                # TODO: if elements are different, but length is same
-                # could be false positive
-                # need overlapping element to appear len(bomb combos) times
                 if len(remaining_tiles) == len(bomb_combos):
                     deduced_clicks = remaining_tiles[0]
                     for tile in remaining_tiles:
                         deduced_clicks = list(set(deduced_clicks).intersection(tile))
                     for box in deduced_clicks:
                         self.board[box[0]][box[1]] = 0
-                        # TODO: change back to + 1
                         to_click.append((box[0] + 1, box[1] + 1))
             if len(to_flag) > 0 or len(to_click) > 0:
                 restart = True
         return restart, to_click, to_flag
-                
     def gimmes(self):
         to_flag, to_click = [], []
         done = False
@@ -237,43 +156,34 @@ class Minesweeper:
                 if restart == True:
                     break
                 for col in range(len(self.board[row])):
-                    # still will call issue for edge squares
                     unit = self.board[row][col]
                     if unit == -1 or unit == -2 or unit == 0 or self.completed[row][col]:
                         continue
                     unopened, bombs, other_squares = self.get_surrounding_tiles(row, col)
                     num_bombs = self.board[row][col] - len(bombs)
-                    
                     if num_bombs == 0:
                         self.completed[row][col] = True
-                    # if all surrounding squares are unclicked bombs
                     if num_bombs > 0 and num_bombs == len(unopened): 
                         for box in unopened:
                             self.board[box[0]][box[1]] = -2
-                            # TODO: change back to + 1
                             to_flag.append((box[0] + 1, box[1] + 1))
                         restart = True
                         self.completed[row][col] = True
                         break
-                    # if all surrounding squares aren't bombs
                     if len(unopened) > 0 and num_bombs == 0:
                         for box in unopened:
                             self.board[box[0]][box[1]] = 0
-                            # TODO: change back to + 1
                             to_click.append((box[0] + 1, box[1] + 1))
                         restart = True
                         self.completed[row][col] = True
                         break
-                    # other
                     restart, to_click1, to_flag1 = self.deducer(unopened, num_bombs, other_squares)
                     to_click += to_click1
                     to_flag += to_flag1
                     if restart == True:
                         break
-                    
             if restart == False:
                 done = True
-        # print(board)
         to_flag = list(set(to_flag))
         return to_click, to_flag
 

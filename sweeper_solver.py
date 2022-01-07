@@ -97,8 +97,17 @@ def algorithm():
 
 
         empty_squares = driver.find_elements_by_class_name("square.blank")
+        """
+        int mina veve'vd = = -0 0fodfnmke
+        
+        
+        
+        
+        
+        """
 
 
+"
 
 def main():
     algorithm()
